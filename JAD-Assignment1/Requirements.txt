@@ -1,0 +1,130 @@
+Members: 
+- ability to perform Read and Update on their user details, and also choose to delete their account
+
+Public: 
+- can access the website, have buttons somewhere to wither log in or register but is optional
+
+Administrator:
+- login with password stored in database (must use the db table to authenticate admin)
+- need session management for all admin pages
+- can run CRUD on db (from website im assuming)
+
+Database:
+
+
+Website:
+- can view services by category
+
+Pages:
+- Nav bar
+	- Register/Login
+	- Link to 
+- Landing page
+- Admin dashboard
+- Admin CRUD control 
+	- 2 buttons, 1 to create 1 to read, when read will show table with data and 2 more buttons on side to update and delete
+
+
+Categories:
+- Laundry
+	- Dry cleaning
+	- Washing and folding
+	- Commercial laundry
+	- Stain removal
+	- Ironing
+	- Specialised care
+
+- Home Cleaning Services:
+	- Mattress cleaning
+	- Kitchen cleaning
+	- Bedroom Services
+	- Living room cleaning
+
+- Home Repair and Services
+	- Plumber
+	- Electrician
+	- Carpenter
+	- Handyman services
+	- Aircon servicing
+
+
+
+
+
+
+
+
+nat:
+header.jsp
+header.css
+footer.html
+serviceCat.jsp
+serviceDetails.jsp
+admin(10)
+
+
+
+
+wadism:
+header.jsp
+header.css
+serviceBooking.jsp
+login.jsp
+register.jsp
+updatePassword.jsp
+profile.jsp
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,129 @@
+@charset "UTF-8";
+
+body, html {
+	background-color: #4D637A;
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+    box-sizing: border-box;
+  }
+
+  header {
+      position: fixed;
+	  top: 0;
+	  left: 0;
+	  width: 100%;
+	  height: 60px;
+	  background-color: #34495e;
+	  color: #fff;
+	  display: flex;
+	  align-items: center;
+	  justify-content: space-between;
+	  z-index: 3;
+	  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+	  padding: 0 20px; 
+	  box-sizing: border-box; 
+  }
+  
+ header h1 {
+    display: absolute;
+    align-items: center; 
+    font-size: 24px; 
+    margin: 0; 
+}
+
+  .menu-toggle {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .menu-toggle span {
+    width: 30px;
+    height: 4px;
+    background-color: #fff;
+    margin: 5px 0;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+  }
+
+  .user-actions {
+      display: flex;
+      align-items: center;
+      gap: 15px; 
+      white-space: nowrap; 
+  }
+
+  .user-actions a {
+      text-decoration: none;
+      color: #ecf0f1;
+      font-size: 1em;
+      font-weight: bold;
+      padding: 5px 10px;
+      border: 2px solid transparent;
+      border-radius: 5px;
+      transition: all 0.3s ease;
+  }
+  
+  .user-actions a:hover {
+      color: #1abc9c;
+      border-color: #1abc9c;
+  }
+
+  .navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0;
+    background: linear-gradient(45deg, #2c3e50, #34495e);
+    overflow-x: hidden;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+    z-index: 2;
+    transition: width 0.5s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .navbar .nav-content {
+    padding: 70px 20px 20px; 
+  }
+
+  .navbar a {
+    padding: 15px 0;
+    padding-left: 20px;
+    text-decoration: none;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #ecf0f1;
+    display: flex;
+    align-items: center;
+    transition: 0.3s;
+  }
+  .navbar a:hover {
+    color: #1abc9c;
+    transform: scale(1.1);
+    transform-origin: left;
+  }
+
+  .navbar .settings {
+    margin: 20px;
+    padding-top: 10px;
+    border-top: 1px solid #7f8c8d;
+    text-align: center;
+  }
+  .navbar .settings a {
+    color: #ecf0f1;
+    font-size: 1.2em;
+    text-decoration: none;
+  }
+  .navbar .settings a:hover {
+    color: #1abc9c;
+  }
+
+  .navbar.active {
+    width: 250px;
+  }
+  .navbar.active ~ main {
+    margin-left: 250px;
+  }
