@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.sql.*" %>
 <%@ include file="sessionHandlingAdmin.jsp" %>
+<%@ page import="java.sql.*" %>
+<%@ page import="java.util.*" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -66,116 +67,91 @@
 </head>
 <body>
 <%
-    boolean isSubmitted = request.getParameter("submit") != null;
-    boolean updateSuccess = false;
-    String message = "";
+    String message = (String) request.getAttribute("message");
     int serviceId = Integer.parseInt(request.getParameter("id"));
     String serviceName = "";
     String serviceDescription = "";
     double servicePrice = 0.0;
     int currentCategoryId = 0;
+    String imagePath = "";
 
     String dbURL = "jdbc:postgresql://ep-wild-feather-a1euu27g.ap-southeast-1.aws.neon.tech/cleaningServices?sslmode=require";
     String dbUser = "cleaningServices_owner";
     String dbPassword = "mh0zgxauP6HJ";
 
-    if (!isSubmitted) {
-        try (Connection connection = DriverManager.getConnection(dbURL, dbUser, dbPassword);
-             PreparedStatement stmt = connection.prepareStatement("SELECT * FROM service WHERE id = ?")) {
-            Class.forName("org.postgresql.Driver");
-            stmt.setInt(1, serviceId);
-            try (ResultSet resultSet = stmt.executeQuery()) {
+    // Retrieve service details
+    try (Connection connection = DriverManager.getConnection(dbURL, dbUser, dbPassword)) {
+        String serviceSQL = "SELECT * FROM service WHERE id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(serviceSQL)) {
+            pstmt.setInt(1, serviceId);
+            try (ResultSet resultSet = pstmt.executeQuery()) {
                 if (resultSet.next()) {
                     serviceName = resultSet.getString("name");
                     serviceDescription = resultSet.getString("description");
                     servicePrice = resultSet.getDouble("price");
                     currentCategoryId = resultSet.getInt("category_id");
+                    imagePath = resultSet.getString("img_path");
                 } else {
                     message = "Service not found.";
                 }
             }
-        } catch (Exception e) {
-            application.log("Error fetching service: " + e.getMessage());
-            message = "An error occurred while fetching the service.";
         }
-    } else {
-        serviceName = request.getParameter("name");
-        serviceDescription = request.getParameter("description");
-        servicePrice = Double.parseDouble(request.getParameter("price"));
-        int newCategoryId = Integer.parseInt(request.getParameter("category_id"));
+    } catch (Exception e) {
+        application.log("Error fetching service: " + e.getMessage());
+        message = "An error occurred while fetching the service.";
+    }
 
-        try (Connection connection = DriverManager.getConnection(dbURL, dbUser, dbPassword);
-             PreparedStatement pstmt = connection.prepareStatement(
-                "UPDATE service SET name = ?, description = ?, price = ?, category_id = ? WHERE id = ?")) {
-            Class.forName("org.postgresql.Driver");
-            pstmt.setString(1, serviceName);
-            pstmt.setString(2, serviceDescription);
-            pstmt.setDouble(3, servicePrice);
-            pstmt.setInt(4, newCategoryId);
-            pstmt.setInt(5, serviceId);
+    // Retrieve categories for the dropdown
+    List<String[]> categories = new ArrayList<>();
+    try (Connection connection = DriverManager.getConnection(dbURL, dbUser, dbPassword);
+         PreparedStatement pstmt = connection.prepareStatement("SELECT id, name FROM service_category");
+         ResultSet resultSet = pstmt.executeQuery()) {
 
-            int rowsAffected = pstmt.executeUpdate();
-            if (rowsAffected > 0) {
-                updateSuccess = true;
-                message = "Service updated successfully.";
-            } else {
-                message = "Failed to update the service. Please try again.";
-            }
-        } catch (Exception e) {
-            application.log("Error updating service: " + e.getMessage());
-            message = "An error occurred while updating the service.";
+        while (resultSet.next()) {
+            categories.add(new String[]{String.valueOf(resultSet.getInt("id")), resultSet.getString("name")});
         }
+    } catch (Exception e) {
+        application.log("Error fetching categories: " + e.getMessage());
     }
 %>
 
 <div class="form-container">
-    <% if (!isSubmitted || !updateSuccess) { %>
-        <h1>Update Service</h1>
-        <% if (!message.isEmpty()) { %>
-            <p class="message" style="color: red;"><%= message %></p>
-        <% } %>
-        <form method="POST">
-            <label for="name">Service Name</label>
-            <input type="text" id="name" name="name" value="<%= serviceName %>" required>
+    <h1>Update Service</h1>
 
-            <label for="description">Description</label>
-            <textarea id="description" name="description" required><%= serviceDescription %></textarea>
-
-            <label for="price">Price</label>
-            <input type="number" step="0.01" id="price" name="price" value="<%= servicePrice %>" required>
-
-            <label for="category_id">Category</label>
-            <select id="category_id" name="category_id" required>
-                <%
-                    try (Connection connection = DriverManager.getConnection(dbURL, dbUser, dbPassword);
-                         PreparedStatement stmt = connection.prepareStatement("SELECT * FROM service_category");
-                         ResultSet categories = stmt.executeQuery()) {
-                        while (categories.next()) {
-                            int categoryId = categories.getInt("id");
-                            String categoryName = categories.getString("name");
-                %>
-                            <option value="<%= categoryId %>" <%= (categoryId == currentCategoryId ? "selected" : "") %>>
-                                <%= categoryName %>
-                            </option>
-                <%
-                        }
-                    } catch (Exception e) {
-                        application.log("Error fetching categories: " + e.getMessage());
-                %>
-                    <option value="" disabled>Error loading categories</option>
-                <%
-                    }
-                %>
-            </select>
-
-            <input type="hidden" name="id" value="<%= serviceId %>">
-            <input type="hidden" name="submit" value="true">
-            <button type="submit">Update Service</button>
-        </form>
-    <% } else { %>
-        <p class="message" style="color: green;"><%= message %></p>
-        <button onclick="window.location.href='adminServices.jsp';">Back to Services</button>
+    <% if (message != null && !message.isEmpty()) { %>
+        <p class="message" style="<%= message.contains("success") ? "color: green;" : "color: red;" %>">
+            <%= message %>
+        </p>
     <% } %>
+
+    <form action="/JAD-Assignment2/admin/UpdateServiceServlet" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="id" value="<%= serviceId %>">
+
+        <label for="name">Service Name</label>
+        <input type="text" id="name" name="name" value="<%= serviceName %>">
+
+        <label for="description">Description</label>
+        <textarea id="description" name="description"><%= serviceDescription %></textarea>
+
+        <label for="price">Price</label>
+        <input type="number" step="0.01" id="price" name="price" value="<%= servicePrice %>">
+
+        <label for="category_id">Category</label>
+        <select id="category_id" name="category_id">
+            <% for (String[] category : categories) { %>
+                <option value="<%= category[0] %>" <%= category[0].equals(String.valueOf(currentCategoryId)) ? "selected" : "" %>>
+                    <%= category[1] %>
+                </option>
+            <% } %>
+        </select>
+
+        <label for="image">Service Image</label>
+        <input type="file" id="image" name="image" accept="image/*">
+
+        <button type="submit">Update Service</button>
+    </form>
+
+    <button onclick="window.location.href='adminServices.jsp';">Back to Services</button>
 </div>
 
 </body>

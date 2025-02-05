@@ -1,6 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.sql.*" %>
 <%@ include file="sessionHandlingAdmin.jsp" %>
+<%@ page import="java.sql.*" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -23,19 +23,20 @@
             border-radius: 10px;
             box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
             width: 400px;
+            text-align: center;
         }
 
         .form-container h1 {
             font-size: 24px;
             margin-bottom: 20px;
             color: #333;
-            text-align: center;
         }
 
         .form-container label {
             display: block;
             margin-bottom: 8px;
             font-weight: bold;
+            text-align: left;
         }
 
         .form-container input, .form-container textarea {
@@ -44,6 +45,12 @@
             margin-bottom: 15px;
             border: 1px solid #ddd;
             border-radius: 5px;
+        }
+
+        .form-container .button-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .form-container button {
@@ -66,87 +73,119 @@
             text-align: center;
             margin-top: 15px;
         }
+
+        /* Image Preview */
+        .preview-container {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .preview-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+
+        /* Spacing between buttons */
+        .button-container button {
+            margin-bottom: 15px;
+        }
     </style>
+    <script>
+        function previewImage(event) {
+            var reader = new FileReader();
+            reader.onload = function() {
+                var output = document.getElementById('imagePreview');
+                output.src = reader.result;
+                output.style.display = 'block';
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    </script>
 </head>
 <body>
+
 <%
-    boolean isSubmitted = request.getParameter("submit") != null;
-    boolean updateSuccess = false;
     String message = "";
-    int categoryId = Integer.parseInt(request.getParameter("id"));
+    String categoryIdStr = request.getParameter("id");
+    int categoryId = -1;
     String categoryName = "";
     String categoryDescription = "";
+    String imagePath = ""; // Holds the current category image path
 
-    String dbURL = "jdbc:postgresql://ep-wild-feather-a1euu27g.ap-southeast-1.aws.neon.tech/cleaningServices?sslmode=require";
-    String dbUser = "cleaningServices_owner";
-    String dbPassword = "mh0zgxauP6HJ";
+    if (categoryIdStr != null && !categoryIdStr.isEmpty()) {
+        try {
+            categoryId = Integer.parseInt(categoryIdStr);
+        } catch (NumberFormatException e) {
+            message = "Invalid category ID format.";
+        }
+    }
 
-    if (!isSubmitted) {
+    if (categoryId > 0) {
+        String dbURL = "jdbc:postgresql://ep-wild-feather-a1euu27g.ap-southeast-1.aws.neon.tech/cleaningServices?sslmode=require";
+        String dbUser = "cleaningServices_owner";
+        String dbPassword = "mh0zgxauP6HJ";
+
         try (Connection connection = DriverManager.getConnection(dbURL, dbUser, dbPassword);
-            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM service_category WHERE id = ?")) {
-            Class.forName("org.postgresql.Driver");
+             PreparedStatement stmt = connection.prepareStatement("SELECT * FROM service_category WHERE id = ?")) {
             stmt.setInt(1, categoryId);
             try (ResultSet resultSet = stmt.executeQuery()) {
                 if (resultSet.next()) {
                     categoryName = resultSet.getString("name");
                     categoryDescription = resultSet.getString("description");
+                    imagePath = resultSet.getString("img_path"); // Retrieve the current category image path
                 } else {
                     message = "Category not found.";
                 }
             }
         } catch (Exception e) {
-            application.log("Error fetching category: " + e.getMessage());
-            message = "An error occurred while fetching the category.";
+            message = "Error fetching category: " + e.getMessage();
         }
     } else {
-        categoryName = request.getParameter("name");
-        categoryDescription = request.getParameter("description");
-
-        try (Connection connection = DriverManager.getConnection(dbURL, dbUser, dbPassword);
-             PreparedStatement pstmt = connection.prepareStatement(
-                "UPDATE service_category SET name = ?, description = ? WHERE id = ?")) {
-            Class.forName("org.postgresql.Driver");
-            pstmt.setString(1, categoryName);
-            pstmt.setString(2, categoryDescription);
-            pstmt.setInt(3, categoryId);
-
-            int rowsAffected = pstmt.executeUpdate();
-            if (rowsAffected > 0) {
-                updateSuccess = true;
-                message = "Category updated successfully.";
-            } else {
-                message = "Failed to update the category. Please try again.";
-            }
-        } catch (Exception e) {
-            application.log("Error updating category: " + e.getMessage());
-            message = "An error occurred while updating the category.";
-        }
+        message = "Invalid category ID.";
     }
 %>
 
 <div class="form-container">
-    <% if (!isSubmitted || !updateSuccess) { %>
+    <% if (message != null && !message.isEmpty()) { %>
+        <p class="message" style="<%= message.contains("success") ? "color: green;" : "color: red;" %>">
+            <%= message %>
+        </p>
+    <% } %>
+
+    <% if (categoryId > 0) { %>
         <h1>Update Category</h1>
-        <% if (!message.isEmpty()) { %>
-            <p class="message" style="color: red;"><%= message %></p>
-        <% } %>
-        <form method="POST">
+        <form action="/JAD-Assignment2/admin/UpdateCategoryServlet" method="POST" enctype="multipart/form-data">
             <label for="name">Category Name</label>
             <input type="text" id="name" name="name" value="<%= categoryName %>" required>
 
             <label for="description">Description</label>
             <textarea id="description" name="description" required><%= categoryDescription %></textarea>
 
+            <label for="image">Category Image</label>
+            <input type="file" id="image" name="image" accept="image/*" onchange="previewImage(event)">
+
+            <!-- Image Preview -->
+            <div class="preview-container">
+                <% if (imagePath != null && !imagePath.isEmpty()) { %>
+                    <img id="imagePreview" src="<%= imagePath %>" alt="Current Image">
+                <% } else { %>
+                    <img id="imagePreview" src="#" alt="Image Preview" style="display: none;">
+                <% } %>
+            </div>
+
             <input type="hidden" name="id" value="<%= categoryId %>">
-            <input type="hidden" name="submit" value="true">
-            <button type="submit">Update Category</button>
+
+            <!-- Buttons with a gap -->
+            <div class="button-container">
+                <button type="submit">Update Category</button>
+                <button type="button" onclick="window.location.href='adminServices.jsp';">Back to Categories</button>
+            </div>
         </form>
     <% } else { %>
-        <p class="message" style="color: green;"><%= message %></p>
-        <button onclick="window.location.href='adminServices.jsp';">Back to Categories</button>
+        <p class="message" style="color: red;">Invalid category ID or category not found.</p>
     <% } %>
 </div>
 
 </body>
-</html>
 </html>

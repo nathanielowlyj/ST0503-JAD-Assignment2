@@ -105,7 +105,7 @@ public class AddNewServiceServlet extends HttpServlet {
         }
 
         // Redirect to result page
-        getServletContext().getRequestDispatcher("/admin/uploadResult.jsp").forward(request, response);
+        getServletContext().getRequestDispatcher("/admin/addService.jsp").forward(request, response);
     }
 
     /**

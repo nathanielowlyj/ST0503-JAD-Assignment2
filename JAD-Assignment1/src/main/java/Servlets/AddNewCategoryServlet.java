@@ -27,7 +27,7 @@ public class AddNewCategoryServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     // Directory where uploaded images will be saved
-    private static final String UPLOAD_DIR = "img/categories";
+    private static final String UPLOAD_DIR = "img";
 
     // Database credentials
     private static final String DB_URL = "jdbc:postgresql://ep-wild-feather-a1euu27g.ap-southeast-1.aws.neon.tech/cleaningServices?sslmode=require";
@@ -79,7 +79,7 @@ public class AddNewCategoryServlet extends HttpServlet {
         }
 
         // Redirect back with a message
-        getServletContext().getRequestDispatcher("/admin/uploadResult.jsp").forward(request, response);
+        getServletContext().getRequestDispatcher("/admin/addCategory.jsp").forward(request, response);
     }
 
     /**
