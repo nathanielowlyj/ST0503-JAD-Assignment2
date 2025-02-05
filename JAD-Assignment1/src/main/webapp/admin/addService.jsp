@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*" %>
+<%@ page import="java.util.ArrayList" %>
 <%@ include file="sessionHandlingAdmin.jsp" %>
 <!DOCTYPE html>
 <html>
@@ -38,14 +39,13 @@
             font-weight: bold;
         }
 
-        .form-container input, .form-container textarea, .form-container button {
+        .form-container input, .form-container textarea, .form-container select, .form-container button {
             width: 100%;
             padding: 10px;
             margin-bottom: 15px;
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 16px;
-            cursor: pointer;
         }
 
         .form-container textarea {
@@ -88,56 +88,49 @@
     String dbUser = "cleaningServices_owner";
     String dbPassword = "mh0zgxauP6HJ";
 
+    // Fetch categories for the dropdown
+    ArrayList<String[]> categories = new ArrayList<>();
+    try (Connection connection = DriverManager.getConnection(dbURL, dbUser, dbPassword);
+         PreparedStatement pstmt = connection.prepareStatement("SELECT id, name FROM service_category");
+         ResultSet resultSet = pstmt.executeQuery()) {
+
+        while (resultSet.next()) {
+            categories.add(new String[]{resultSet.getString("id"), resultSet.getString("name")});
+        }
+    } catch (Exception e) {
+        application.log("Error fetching categories: " + e.getMessage());
+    }
+
     if (isSubmitted) {
         String serviceName = request.getParameter("name");
         String serviceDescription = request.getParameter("description");
         double servicePrice = Double.parseDouble(request.getParameter("price"));
         int categoryId = Integer.parseInt(request.getParameter("category_id"));
-        boolean categoryExists = false;
-        try (Connection connection = DriverManager.getConnection(dbURL, dbUser, dbPassword);
-             PreparedStatement categoryCheckStmt = connection.prepareStatement(
-                "SELECT COUNT(*) AS count FROM service_category WHERE id = ?")) {
-            Class.forName("org.postgresql.Driver");
-            categoryCheckStmt.setInt(1, categoryId);
 
-            try (ResultSet resultSet = categoryCheckStmt.executeQuery()) {
-                if (resultSet.next()) {
-                    categoryExists = resultSet.getInt("count") > 0;
-                }
+        try (Connection connection = DriverManager.getConnection(dbURL, dbUser, dbPassword);
+             PreparedStatement pstmt = connection.prepareStatement(
+                "INSERT INTO service (name, description, price, category_id) VALUES (?, ?, ?, ?)")) {
+            Class.forName("org.postgresql.Driver");
+            pstmt.setString(1, serviceName);
+            pstmt.setString(2, serviceDescription);
+            pstmt.setDouble(3, servicePrice);
+            pstmt.setInt(4, categoryId);
+
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                message = "Service created successfully.";
+            } else {
+                message = "Failed to create the service. Please try again.";
             }
         } catch (Exception e) {
-            application.log("Error checking category: " + e.getMessage());
-            message = "An error occurred while validating the category.";
-        }
-
-        if (!categoryExists) {
-            message = "The specified Category ID does not exist. Please check and try again.";
-        } else {
-            try (Connection connection = DriverManager.getConnection(dbURL, dbUser, dbPassword);
-                 PreparedStatement pstmt = connection.prepareStatement(
-                    "INSERT INTO service (name, description, price, category_id) VALUES (?, ?, ?, ?)")) {
-                Class.forName("org.postgresql.Driver");
-                pstmt.setString(1, serviceName);
-                pstmt.setString(2, serviceDescription);
-                pstmt.setDouble(3, servicePrice);
-                pstmt.setInt(4, categoryId);
-
-                int rowsAffected = pstmt.executeUpdate();
-                if (rowsAffected > 0) {
-                    message = "Service created successfully.";
-                } else {
-                    message = "Failed to create the service. Please try again.";
-                }
-            } catch (Exception e) {
-                application.log("Error creating service: " + e.getMessage());
-                message = "An error occurred while creating the service.";
-            }
+            application.log("Error creating service: " + e.getMessage());
+            message = "An error occurred while creating the service.";
         }
     }
 %>
 
 <div class="form-container">
-    <% if (!isSubmitted || message.contains("Failed") || message.contains("error") || message.contains("Category ID")) { %>
+    <% if (!isSubmitted || message.contains("Failed") || message.contains("error")) { %>
         <h1>Create Service</h1>
         <% if (!message.isEmpty()) { %>
             <p class="message" style="color: red;"><%= message %></p>
@@ -152,8 +145,12 @@
             <label for="price">Price</label>
             <input type="number" step="0.01" id="price" name="price" required>
 
-            <label for="category_id">Category ID</label>
-            <input type="number" id="category_id" name="category_id" required>
+            <label for="category_id">Category</label>
+            <select id="category_id" name="category_id" required>
+                <% for (String[] category : categories) { %>
+                    <option value="<%= category[0] %>"><%= category[1] %></option>
+                <% } %>
+            </select>
 
             <input type="hidden" name="submit" value="true">
             <button type="submit" class="add-btn">Create Service</button>

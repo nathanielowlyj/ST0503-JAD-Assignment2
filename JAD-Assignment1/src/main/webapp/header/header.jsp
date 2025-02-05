@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sidebar Navbar</title>
-<link rel="stylesheet" href="/JAD-Assignment1/header/header.css">
+<link rel="stylesheet" href="/JAD-Assignment2/header/header.css">
 </head>
 <body>
 
@@ -14,7 +14,7 @@
 <div class="menu-toggle" id="menuToggle">
     <span></span><span></span><span></span>
 </div>
-<h1><img src="/JAD-Assignment1/img/logo.png" alt="Logo" style="width: 30px; height: 30px; padding-right: 10px; vertical-align: middle;">Bright Space</h1>
+<h1><img src="/JAD-Assignment2/img/logo.png" alt="Logo" style="width: 30px; height: 30px; padding-right: 10px; vertical-align: middle;">Bright Space</h1>
 <div class="user-actions" id="userActions">
 <%
     String userId = (String) session.getAttribute("id");
@@ -22,13 +22,13 @@
         
     if (userId != null && userRole != null) {
 %>
-        <a href="/JAD-Assignment1/customer/profile.jsp">Profile</a>
+        <a href="/JAD-Assignment2/customer/profile.jsp">Profile</a>
         <a href="?action=logout" id="logout">Logout</a>
 <%
     } else {
 %>
-        <a href="/JAD-Assignment1/login.jsp">Login</a>
-        <a href="/JAD-Assignment1/register.jsp">Register</a>
+        <a href="/JAD-Assignment2/login.jsp">Login</a>
+        <a href="/JAD-Assignment2/register.jsp">Register</a>
 <%
     }
 %>
@@ -38,19 +38,19 @@
 <!-- Sidebar Navbar -->
 <div class="navbar" id="navbar">
 	<div class="nav-content" id="nav-content">
-	    <a href="/JAD-Assignment1/landing.jsp">Home</a>
-	    <a href="/JAD-Assignment1/serviceCat.jsp">Services</a>
+	    <a href="/JAD-Assignment2/landing.jsp">Home</a>
+	    <a href="/JAD-Assignment2/serviceCat.jsp">Services</a>
 	    <%
 	        if ("admin".equals(userRole)) {
 	    %>
-	            <a href='/JAD-Assignment1/admin/adminServices.jsp'>Services (Admin)</a>
-	            <a href='/JAD-Assignment1/admin/adminBookingReports.jsp'>Booking Reports</a>
-	            <a href='/JAD-Assignment1/admin/registeredCustomers.jsp'>Customer Records</a>
+	            <a href='/JAD-Assignment2/admin/adminServices.jsp'>Services (Admin)</a>
+	            <a href='/JAD-Assignment2/admin/adminBookingReports.jsp'>Booking Reports</a>
+	            <a href='/JAD-Assignment2/admin/registeredCustomers.jsp'>Customer Records</a>
 	    <%
 	        } else if ("user".equals(userRole)) {
 	    %>
-	            <a href='/JAD-Assignment1/customer/serviceBooking.jsp'>Booking</a>
-	            <a href='/JAD-Assignment1/customer/customerFeedback.jsp'>Review</a>
+	            <a href='/JAD-Assignment2/customer/serviceBooking.jsp'>Booking</a>
+	            <a href='/JAD-Assignment2/customer/customerFeedback.jsp'>Review</a>
 	    <%
 	        }
 	    %>
@@ -65,7 +65,7 @@
         if (session != null) {
             session.invalidate(); 
         }
-        response.sendRedirect("/JAD-Assignment1/landing.jsp"); 
+        response.sendRedirect("/JAD-Assignment2/landing.jsp"); 
     }
 %>
 

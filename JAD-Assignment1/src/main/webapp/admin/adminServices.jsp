@@ -140,7 +140,10 @@
     try {
         Class.forName("org.postgresql.Driver");
         connection = DriverManager.getConnection(dbURL, dbUser, dbPassword);
-        String serviceSql = "SELECT * FROM service ORDER BY id ASC LIMIT " + pageSize + " OFFSET " + serviceOffset;
+        String serviceSql = "SELECT s.id, s.category_id, sc.name AS category_name, s.name, s.description, s.price " +
+                "FROM service s " +
+                "JOIN service_category sc ON s.category_id = sc.id " +
+                "ORDER BY s.id ASC LIMIT " + pageSize + " OFFSET " + serviceOffset;
         serviceStmt = connection.createStatement();
         serviceResultSet = serviceStmt.executeQuery(serviceSql);
 %>
@@ -151,7 +154,7 @@
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Category ID</th> 
+                <th>Category Name</th> 
                 <th>Name</th>
                 <th>Description</th>
                 <th>Price</th>
@@ -163,13 +166,14 @@
                 while (serviceResultSet.next()) {
                     int id = serviceResultSet.getInt("id");
                     int categoryId = serviceResultSet.getInt("category_id"); 
+                    String categoryName = serviceResultSet.getString("category_name");
                     String name = serviceResultSet.getString("name");
                     String description = serviceResultSet.getString("description");
                     double price = serviceResultSet.getDouble("price");
             %>
             <tr>
                 <td><%= id %></td>
-                <td><%= categoryId %></td> 
+                <td><%= categoryName %></td> 
                 <td><%= name %></td>
                 <td><%= description %></td>
                 <td>$<%= price %></td>
