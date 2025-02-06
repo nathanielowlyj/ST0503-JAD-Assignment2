@@ -1,6 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ include file="sessionHandlingAdmin.jsp" %>
-<%@ page import="java.sql.*" %>
+<%@ page import="java.util.*" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -17,6 +17,43 @@
 
         .container {
             margin: 20px auto;
+            width: 80%;
+        }
+
+        .filter-section {
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 20px;
+            background-color: #e8e8e8;
+            border-radius: 10px;
+        }
+
+        .filter-section select,
+        .filter-section input {
+            padding: 12px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            width: 200px;
+        }
+
+        .filter-section button {
+            padding: 12px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .filter-section button:hover {
+            background-color: #0056b3;
         }
 
         table {
@@ -45,227 +82,132 @@
             background-color: #3a3f44;
         }
 
-        button {
-            padding: 8px 12px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
         h1 {
-            color: white;
             margin-top: 70px;
             margin-bottom: 30px;
-        }
-
-        .pagination {
-            margin: 20px auto;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .pagination a {
-            padding: 8px 12px;
-            text-decoration: none;
-            border: 1px solid #6c757d;
             color: white;
-            background-color: #495057;
-            border-radius: 5px;
-        }
-
-        .pagination a.active {
-            font-weight: bold;
-            background-color: #6c757d;
-        }
-
-        .pagination a:hover {
-            background-color: #6c757d;
-        }
-
-        .pop-up {
-            display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .pop-up-content {
-            background-color: white;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 40%;
-            border-radius: 10px;
-        }
-
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .close:hover, .close:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
         }
     </style>
     <script>
-        function showDetails(bookingId) {
-            const popUp = document.getElementById('pop-up-' + bookingId);
-            popUp.style.display = 'flex';
+        function updateFilterOptions() {
+            var filterType = document.getElementById("filterType").value;
+
+            // Hide all inputs initially
+            document.getElementById("dateInputs").style.display = "none";
+            document.getElementById("monthInput").style.display = "none";
+            document.getElementById("singleDateInput").style.display = "none";
+
+            // Show relevant inputs based on selection
+            if (filterType === "dateRange") {
+                document.getElementById("dateInputs").style.display = "flex";
+            } else if (filterType === "specificDate") {
+                document.getElementById("singleDateInput").style.display = "block";
+            } else if (filterType === "month") {
+                document.getElementById("monthInput").style.display = "block";
+            }
         }
 
-        function closeDetails(bookingId) {
-            const popUp = document.getElementById('pop-up-' + bookingId);
-            popUp.style.display = 'none';
-        }
+        window.onload = function () {
+            updateFilterOptions(); // Ensure the correct options are displayed after a filter is applied
+        };
     </script>
 </head>
 <body>
+
 <%@ include file="../header/header.jsp" %>
 
 <div class="container">
     <h1>Booking List with Service Details</h1>
-    <%
-    String dbURL = "jdbc:postgresql://ep-wild-feather-a1euu27g.ap-southeast-1.aws.neon.tech/cleaningServices?sslmode=require";
-    String dbUser = "cleaningServices_owner";
-    String dbPassword = "mh0zgxauP6HJ";
 
-    int currentPage = request.getParameter("page") != null ? Integer.parseInt(request.getParameter("page")) : 1;
-    int recordsPerPage = 6;
-    int offset = (currentPage - 1) * recordsPerPage;
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <form action="/JAD-Assignment2/admin/FilterBookingsServlet" method="GET" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+            <label for="filterType">Filter By:</label>
+            <select id="filterType" name="filterType" onchange="updateFilterOptions()">
+                <option value="none" <%= "none".equals(request.getParameter("filterType")) ? "selected" : "" %>>All Records</option>
+                <option value="specificDate" <%= "specificDate".equals(request.getParameter("filterType")) ? "selected" : "" %>>Specific Date</option>
+                <option value="dateRange" <%= "dateRange".equals(request.getParameter("filterType")) ? "selected" : "" %>>Date Range</option>
+                <option value="month" <%= "month".equals(request.getParameter("filterType")) ? "selected" : "" %>>Month</option>
+            </select>
 
-    Connection connection = null;
-    PreparedStatement stmt = null;
-    PreparedStatement countStmt = null;
-    ResultSet resultSet = null;
-    ResultSet countResultSet = null;
+            <!-- Single Date Filter -->
+            <div id="singleDateInput" style="display: none;">
+                <label for="date">Select Date:</label>
+                <input type="date" id="date" name="date" value="<%= request.getParameter("date") %>">
+            </div>
 
-    try {
-        Class.forName("org.postgresql.Driver");
-        connection = DriverManager.getConnection(dbURL, dbUser, dbPassword);
-        String sql = "SELECT bl.id AS booking_id, " +
-                     "u.id AS user_id, " +
-                     "u.name AS user_name, " +
-                     "bd.booking_date, " +
-                     "bd.quantity, " +
-                     "bd.price, " +
-                     "bd.total, " +
-                     "s.name AS service_name, " +
-                     "s.description AS service_description " +
-                     "FROM booking_list bl " +
-                     "JOIN users u ON bl.user_id = u.id " +
-                     "JOIN booking_details bd ON bl.id = bd.booking_id " +
-                     "JOIN service s ON bd.service_id = s.id " +
-                     "LIMIT ? OFFSET ?";
-        stmt = connection.prepareStatement(sql);
-        stmt.setInt(1, recordsPerPage);
-        stmt.setInt(2, offset);
-        resultSet = stmt.executeQuery();
+            <!-- Date Range Filter -->
+            <div id="dateInputs" style="display: none; flex-direction: column;">
+                <label for="startDate">Start Date:</label>
+                <input type="date" id="startDate" name="startDate" value="<%= request.getParameter("startDate") %>">
+                <label for="endDate">End Date:</label>
+                <input type="date" id="endDate" name="endDate" value="<%= request.getParameter("endDate") %>">
+            </div>
 
-        countStmt = connection.prepareStatement("SELECT COUNT(*) AS total FROM booking_list");
-        countResultSet = countStmt.executeQuery();
-        countResultSet.next();
-        int totalRecords = countResultSet.getInt("total");
-        int totalPages = (int) Math.ceil((double) totalRecords / recordsPerPage);
-    %>
-        <table>
-            <thead>
-                <tr>
-                    <th>Booking ID</th>
-                    <th>User ID</th>
-                    <th>User Name</th>
-                    <th>Booking Date</th>
-                    <th>Service Name</th>
-                    <th>Quantity</th>
-                    <th>Price</th>
-                    <th>Total</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <%
-                    while (resultSet.next()) {
-                        int bookingId = resultSet.getInt("booking_id");
-                        int user_id = resultSet.getInt("user_id");
-                        String userName = resultSet.getString("user_name");
-                        String bookingDate = resultSet.getString("booking_date");
-                        String serviceName = resultSet.getString("service_name");
-                        String serviceDescription = resultSet.getString("service_description");
-                        int quantity = resultSet.getInt("quantity");
-                        double price = resultSet.getDouble("price");
-                        double total = resultSet.getDouble("total");
-                %>
-                <tr>
-                    <td><%= bookingId %></td>
-                    <td><%= user_id %></td>
-                    <td><%= userName %></td>
-                    <td><%= bookingDate %></td>
-                    <td><%= serviceName %></td>
-                    <td><%= quantity %></td>
-                    <td>$<%= price %></td>
-                    <td>$<%= total %></td>
-                    <td><button onclick="showDetails(<%= bookingId %>)">Details</button></td>
-                </tr>
-                <div id="pop-up-<%= bookingId %>" class="pop-up">
-                    <div class="pop-up-content">
-                        <span class="close" onclick="closeDetails(<%= bookingId %>)">&times;</span>
-                        <h2>Booking Details</h2>
-                        <p><strong>Booking ID:</strong> <%= bookingId %></p>
-                        <p><strong>User ID:</strong> <%= user_id %></p>
-                        <p><strong>User Name:</strong> <%= userName %></p>
-                        <p><strong>Booking Date:</strong> <%= bookingDate %></p>
-                        <p><strong>Service Name:</strong> <%= serviceName %></p>
-                        <p><strong>Service Description:</strong> <%= serviceDescription %></p>
-                        <p><strong>Quantity:</strong> <%= quantity %></p>
-                        <p><strong>Price:</strong> $<%= price %></p>
-                        <p><strong>Total:</strong> $<%= total %></p>
-                    </div>
-                </div>
-                <%
-                    }
-                %>
-            </tbody>
-        </table>
-        <div class="pagination">
+            <!-- Month Filter -->
+            <div id="monthInput" style="display: none;">
+                <label for="month">Select Month:</label>
+                <select id="month" name="month">
+                    <% for (int i = 1; i <= 12; i++) { %>
+                        <option value="<%= i %>" <%= (String.valueOf(i).equals(request.getParameter("month"))) ? "selected" : "" %>>
+                            <%= new java.text.DateFormatSymbols().getMonths()[i - 1] %>
+                        </option>
+                    <% } %>
+                </select>
+            </div>
+
+            <button type="submit">Filter</button>
+        </form>
+    </div>
+
+    <!-- Display Booking List -->
+    <table>
+        <thead>
+            <tr>
+                <th>Booking ID</th>
+                <th>Service Name</th>
+                <th>Booking Date</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
             <%
-                for (int i = 1; i <= totalPages; i++) {
+                List<Map<String, Object>> bookingDetails = (List<Map<String, Object>>) request.getAttribute("bookingDetails");
+                String error = (String) request.getAttribute("error");
+                if (error != null) {
             %>
-                <a href="?page=<%= i %>" class="<%= (i == currentPage) ? "active" : "" %>"><%= i %></a>
+                <tr>
+                    <td colspan="6" style="color: red;"><%= error %></td>
+                </tr>
+            <%
+                } else if (bookingDetails != null && !bookingDetails.isEmpty()) {
+                    for (Map<String, Object> booking : bookingDetails) {
+            %>
+            <tr>
+                <td><%= booking.get("bookingId") %></td>
+                <td><%= booking.get("serviceName") %></td>
+                <td><%= booking.get("bookingDate") %></td>
+                <td><%= booking.get("quantity") %></td>
+                <td>$<%= booking.get("price") %></td>
+                <td>$<%= booking.get("total") %></td>
+            </tr>
+            <%
+                    }
+                } else {
+            %>
+            <tr>
+                <td colspan="6">No bookings found.</td>
+            </tr>
             <%
                 }
             %>
-        </div>
-    <%
-        } catch (Exception e) {
-            application.log("Error: " + e.getMessage());
-            out.println("<p style='color:red;'>An error occurred while fetching the booking data.</p>");
-        } finally {
-            if (resultSet != null) try { resultSet.close(); } catch (SQLException ignore) {}
-            if (stmt != null) try { stmt.close(); } catch (SQLException ignore) {}
-            if (countResultSet != null) try { countResultSet.close(); } catch (SQLException ignore) {}
-            if (countStmt != null) try { countStmt.close(); } catch (SQLException ignore) {}
-            if (connection != null) try { connection.close(); } catch (SQLException ignore) {}
-        }
-    %>
+        </tbody>
+    </table>
 </div>
 
 <%@ include file="../footer.html" %>
+
 </body>
 </html>
