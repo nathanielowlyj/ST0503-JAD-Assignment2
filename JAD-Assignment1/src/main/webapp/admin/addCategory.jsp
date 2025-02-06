@@ -1,5 +1,4 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"%>
-<%@ page import="java.sql.*" %>
 <%@ include file="sessionHandlingAdmin.jsp" %>
 <!DOCTYPE html>
 <html>
@@ -72,72 +71,97 @@
             background-color: #c82333;
         }
 
-        .message {
-            font-size: 18px;
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
             text-align: center;
+        }
+
+        .modal-content button {
             margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .modal-content button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
-<%
-    boolean isSubmitted = "POST".equalsIgnoreCase(request.getMethod());
-    String message = "";
-
-    String dbURL = "jdbc:postgresql://ep-wild-feather-a1euu27g.ap-southeast-1.aws.neon.tech/cleaningServices?sslmode=require";
-    String dbUser = "cleaningServices_owner";
-    String dbPassword = "mh0zgxauP6HJ";
-
-    if (isSubmitted) {
-        String categoryName = request.getParameter("name");
-        String categoryDescription = request.getParameter("description");
-
-        if (categoryName == null || categoryName.trim().isEmpty() || categoryDescription == null || categoryDescription.trim().isEmpty()) {
-            message = "Please fill out all fields.";
-        } else {
-            try (Connection connection = DriverManager.getConnection(dbURL, dbUser, dbPassword);
-                 PreparedStatement pstmt = connection.prepareStatement(
-                    "INSERT INTO service_category (name, description) VALUES (?, ?)")) {
-                Class.forName("org.postgresql.Driver");
-                pstmt.setString(1, categoryName.trim());
-                pstmt.setString(2, categoryDescription.trim());
-
-                int rowsAffected = pstmt.executeUpdate();
-                if (rowsAffected > 0) {
-                    message = "Category created successfully.";
-                } else {
-                    message = "Failed to create the category. Please try again.";
-                }
-            } catch (Exception e) {
-                application.log("Error creating category: " + e.getMessage());
-                message = "An error occurred while creating the category.";
-            }
-        }
-    }
-%>
-
-<div class="form-container">
-    <% if (!isSubmitted || message.contains("Failed") || message.contains("error") || message.contains("Please fill out")) { %>
+    <div class="form-container">
         <h1>Create Category</h1>
-        <% if (!message.isEmpty()) { %>
-            <p class="message" style="color: red;"><%= message %></p>
-        <% } %>
-        <form method="POST">
+        <form action="/JAD-Assignment2/admin/AddNewCategoryServlet" method="POST" enctype="multipart/form-data" onsubmit="showSuccessModal(event)">
             <label for="name">Category Name</label>
             <input type="text" id="name" name="name" required>
 
             <label for="description">Description</label>
             <textarea id="description" name="description" required></textarea>
 
-            <input type="hidden" name="submit" value="true">
+            <label for="image">Category Image</label>
+            <input type="file" id="image" name="image" accept="image/*" required>
+
             <button type="submit" class="add-btn">Create Category</button>
             <button type="button" class="close-btn" onclick="window.location.href='adminServices.jsp';">Close</button>
         </form>
-    <% } else { %>
-        <p class="message" style="color: green;"><%= message %></p>
-        <button onclick="window.location.href='adminServices.jsp';">Back to Categories</button>
-    <% } %>
-</div>
+    </div>
 
+    <!-- Modal for success message -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <p>Category created successfully!</p>
+            <button onclick="closeSuccessModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        function showSuccessModal(event) {
+            event.preventDefault(); // Prevent the default form submission
+            const form = event.target;
+
+            const formData = new FormData(form);
+
+            // Send the form data using Fetch API
+            fetch(form.action, {
+                method: form.method,
+                body: formData,
+            })
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('successModal').style.display = 'flex';
+                    } else {
+                        alert('An error occurred while creating the category.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                });
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').style.display = 'none';
+            window.location.href = 'adminServices.jsp';
+        }
+    </script>
 </body>
 </html>
