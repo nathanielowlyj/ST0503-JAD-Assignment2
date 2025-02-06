@@ -223,6 +223,8 @@
         const timeInput = document.getElementById('time');
         const costSpan = document.getElementById('cost');
         const totalSpan = document.getElementById('total');
+        const GSTSpan = document.getElementById('GSTcontent');
+        const totalGSTSpan = document.getElementById('totalGST');
         const checkoutButton = document.querySelector('.button');
 
         const today = new Date();
@@ -237,6 +239,8 @@
 
             costSpan.textContent = costPerHour.toFixed(2);
             totalSpan.textContent = (costPerHour * duration).toFixed(2);
+            GSTSpan.textContent = (costPerHour * duration * 0.09).toFixed(2);
+            totalGSTSpan.textContent = (costPerHour * duration + costPerHour * duration * 0.09).toFixed(2);
         }
 
         async function handleCheckout() {
@@ -356,6 +360,8 @@
             <div class="box">
                 <p id="costPerHour">Cost: $<span id="cost">0</span>/hr</p>
                 <p id="totalCost">Total: $<span id="total">0</span></p>
+                <p id="GST">GST: $<span id="GSTcontent">0</span></p>
+                <p id="totalCostGST">Total (With GST): $<span id="totalGST">0</span></p>
             </div>
             <button class="button">Checkout</button>
         </div>
