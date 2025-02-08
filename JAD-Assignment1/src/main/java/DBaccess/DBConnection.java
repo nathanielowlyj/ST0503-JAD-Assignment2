@@ -9,7 +9,7 @@ public class DBConnection {
         String dbUrl = "jdbc:postgresql://ep-wild-feather-a1euu27g.ap-southeast-1.aws.neon.tech/cleaningServices?sslmode=require";
         String dbUser = "cleaningServices_owner";
         String dbPassword = "mh0zgxauP6HJ";
-        String dbClass = "com.mysql.cj.jdbc.Driver";
+        String dbClass = "org.postgresql.Driver";
 
         Connection connection = null;
         try {
