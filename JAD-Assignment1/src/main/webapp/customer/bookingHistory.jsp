@@ -266,8 +266,6 @@
         <input type="date" id="editDate" name="date" required><br>
         <label for="editTime">Time:</label>
         <input type="time" id="editTime" name="time" required><br>
-        <label for="editQuantity">Quantity:</label>
-        <input type="number" id="editQuantity" name="quantity" min="1" required><br>
         <button type="button" onclick="closeEditPopup()">Cancel</button>
         <button type="submit">Save Changes</button>
     </form>
@@ -279,9 +277,8 @@
         const bookingId = document.getElementById('editPopup-booking-id').value;
         const date = document.getElementById('editDate').value;
         const time = document.getElementById('editTime').value;
-        const quantity = document.getElementById('editQuantity').value;
         
-        fetch('updateBooking.jsp?bookingId=' + bookingId + '&date=' + date + '&time=' + time + '&quantity=' + quantity, {
+        fetch('updateBooking.jsp?bookingId=' + bookingId + '&date=' + date + '&time=' + time, {
             method: 'POST'
         }).then(response => response.text())
           .then(data => {

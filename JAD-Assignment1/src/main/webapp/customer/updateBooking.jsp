@@ -6,9 +6,8 @@
     String bookingId = request.getParameter("bookingId");
     String date = request.getParameter("date");
     String time = request.getParameter("time");
-    String quantity = request.getParameter("quantity");
 
-    if (bookingId != null && date != null && time != null && quantity != null) {
+    if (bookingId != null && date != null && time != null) {
         Connection conn = null;
         PreparedStatement stmt = null;
 
@@ -19,11 +18,10 @@
                 "cleaningServices_owner",
                 "mh0zgxauP6HJ");
 
-            String updateSql = "UPDATE booking_details SET booking_date = ?, quantity = ? WHERE id = ?";
+            String updateSql = "UPDATE booking_details SET booking_date = ? WHERE id = ?";
             stmt = conn.prepareStatement(updateSql);
             stmt.setTimestamp(1, Timestamp.valueOf(date + " " + time + ":00"));
-            stmt.setInt(2, Integer.parseInt(quantity));
-            stmt.setInt(3, Integer.parseInt(bookingId));
+            stmt.setInt(2, Integer.parseInt(bookingId));
 
             int rowsUpdated = stmt.executeUpdate();
 

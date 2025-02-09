@@ -46,6 +46,10 @@ public class FilterBookingsServlet extends HttpServlet {
                         int month = Integer.parseInt(request.getParameter("month"));
                         bookingDetailsList = bookingDAO.getFilteredBookings("month", String.valueOf(month));
                         break;
+                    case "status":
+                    	String status = request.getParameter("status");
+                    	bookingDetailsList = bookingDAO.getFilteredBookings("status", status);
+                    	break;
                     default:
                         throw new IllegalArgumentException("Invalid filter type");
                 }

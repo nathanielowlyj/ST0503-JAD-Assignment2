@@ -44,6 +44,8 @@
 	        if ("admin".equals(userRole)) {
 	    %>
 	            <a href='/JAD-Assignment2/admin/adminServices.jsp'>Services (Admin)</a>
+	            <a href='/JAD-Assignment2/customer/serviceBooking.jsp'>Booking</a>
+	            <a href='/JAD-Assignment2/customer/bookingHistory.jsp'>My Bookings</a>
 	            <a href='/JAD-Assignment2/admin/adminBookingReports.jsp'>Booking Reports</a>
 	            <a href='/JAD-Assignment2/admin/registeredCustomers.jsp'>Customer Records</a>
 	    <%
