@@ -1,152 +1,119 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.sql.*" %>
 <%@ include file="sessionHandlingAdmin.jsp" %>
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <title>Manage Services and Categories</title>
-	<style>
-	    body {
-	        font-family: Arial, sans-serif;
-	        text-align: center;
-	        background-color: #4d637a;
-	    }
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #4d637a;
+        }
 
-	    .table-container {
-	        margin: 40px auto;
-	        width: 80%;
-	    }
+        .table-container {
+            margin: 40px auto;
+            width: 80%;
+        }
 
-	    table {
-	        width: 100%;
-	        border-collapse: separate;
-	        border-spacing: 0;
-	        margin: 0 auto;
-	        border: 1px solid #6c757d;
-	        border-radius: 10px;
-	        overflow: hidden;
-	        background-color: #343a40; 
-	    }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 0 auto;
+            border: 1px solid #6c757d;
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: #343a40;
+        }
 
-	    table th, table td {
-	        padding: 10px;
-	        text-align: left;
-	        color: white;
-	        border: 1px solid #6c757d;
-	    }
+        table th, table td {
+            padding: 10px;
+            text-align: left;
+            color: white;
+            border: 1px solid #6c757d;
+        }
 
-	    table th {
-	        background-color: #495057; 
-	    }
+        table th {
+            background-color: #495057;
+        }
 
-	    table td {
-	        background-color: #343a40;
-	    }
+        table td {
+            background-color: #343a40;
+        }
 
-	    .pagination {
-	        margin: 20px 0;
-	        display: flex;
-	        justify-content: center;
-	        gap: 10px;
-	    }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ffffff;
+        }
 
-	    .pagination a {
-	        padding: 5px 10px;
-	        border: 1px solid #6c757d;
-	        text-decoration: none;
-	        color: white;
-	        background-color: #495057;
-	        border-radius: 5px;
-	    }
+        .create-btn {
+            margin: 20px;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
 
-	    .pagination a.active {
-	        font-weight: bold;
-	        background-color: #6c757d;
-	    }
+        .create-btn:hover {
+            background-color: #218838;
+        }
 
-	    .pagination a:hover {
-	        background-color: #6c757d;
-	    }
+        .pagination {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
 
-	    h1 {
-	        text-align: center;
-	        margin-bottom: 20px;
-	        color: #ffffff;
-	    }
+        .pagination a {
+            padding: 5px 10px;
+            border: 1px solid #6c757d;
+            text-decoration: none;
+            color: white;
+            background-color: #495057;
+            border-radius: 5px;
+        }
 
-	    .create-btn {
-	        margin: 20px;
-	        padding: 10px 20px;
-	        background-color: #28a745;
-	        color: white;
-	        border: none;
-	        border-radius: 5px;
-	        cursor: pointer;
-	    }
+        .pagination a.active {
+            font-weight: bold;
+            background-color: #6c757d;
+        }
 
-	    .create-btn:hover {
-	        background-color: #218838;
-	    }
+        .pagination a:hover {
+            background-color: #6c757d;
+        }
 
-	    .footer-space {
-	        margin-bottom: 40px; 
-	    }
+        .action-buttons button {
+            padding: 8px 15px;
+            margin: 0 5px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
 
-	    .action-buttons button {
-	        padding: 8px 15px;
-	        margin: 0 5px;
-	        background-color: #007bff;
-	        color: white;
-	        border: none;
-	        border-radius: 5px;
-	        cursor: pointer;
-	    }
+        .action-buttons button:hover {
+            background-color: #0056b3;
+        }
 
-	    .action-buttons button:hover {
-	        background-color: #0056b3;
-	    }
+        .action-buttons button.delete {
+            background-color: #dc3545;
+        }
 
-	    .action-buttons button.delete {
-	        background-color: #dc3545;
-	    }
-
-	    .action-buttons button.delete:hover {
-	        background-color: #bd2130;
-	    }
-	</style>
+        .action-buttons button.delete:hover {
+            background-color: #bd2130;
+        }
+    </style>
 </head>
 <body>
 <%@ include file="../header/header.jsp" %>
 <h1>Manage Services and Categories</h1>
-
-<%
-    int servicePage = request.getParameter("servicePage") != null ? Integer.parseInt(request.getParameter("servicePage")) : 1;
-    int categoryPage = request.getParameter("categoryPage") != null ? Integer.parseInt(request.getParameter("categoryPage")) : 1;
-    int pageSize = 5; 
-    int serviceOffset = (servicePage - 1) * pageSize;
-    int categoryOffset = (categoryPage - 1) * pageSize;
-
-    String dbURL = "jdbc:postgresql://ep-wild-feather-a1euu27g.ap-southeast-1.aws.neon.tech/cleaningServices?sslmode=require";
-    String dbUser = "cleaningServices_owner";
-    String dbPassword = "mh0zgxauP6HJ";
-
-    Connection connection = null;
-    Statement serviceStmt = null;
-    Statement categoryStmt = null;
-    ResultSet serviceResultSet = null;
-    ResultSet categoryResultSet = null;
-
-    try {
-        Class.forName("org.postgresql.Driver");
-        connection = DriverManager.getConnection(dbURL, dbUser, dbPassword);
-        String serviceSql = "SELECT s.id, s.category_id, sc.name AS category_name, s.name, s.description, s.price " +
-                "FROM service s " +
-                "JOIN service_category sc ON s.category_id = sc.id " +
-                "ORDER BY s.id ASC LIMIT " + pageSize + " OFFSET " + serviceOffset;
-        serviceStmt = connection.createStatement();
-        serviceResultSet = serviceStmt.executeQuery(serviceSql);
-%>
 
 <div class="table-container">
     <h1>Services</h1>
@@ -154,73 +121,26 @@
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Category Name</th> 
+                <th>Category Name</th>
                 <th>Name</th>
                 <th>Description</th>
                 <th>Price</th>
                 <th>Actions</th>
             </tr>
         </thead>
-        <tbody>
-            <%
-                while (serviceResultSet.next()) {
-                    int id = serviceResultSet.getInt("id");
-                    int categoryId = serviceResultSet.getInt("category_id"); 
-                    String categoryName = serviceResultSet.getString("category_name");
-                    String name = serviceResultSet.getString("name");
-                    String description = serviceResultSet.getString("description");
-                    double price = serviceResultSet.getDouble("price");
-            %>
-            <tr>
-                <td><%= id %></td>
-                <td><%= categoryName %></td> 
-                <td><%= name %></td>
-                <td><%= description %></td>
-                <td>$<%= price %></td>
-                <td class="action-buttons">
-                    <form action="editServices.jsp" method="GET" style="display:inline;">
-                        <input type="hidden" name="id" value="<%= id %>">
-                        <button type="submit">Edit</button>
-                    </form>
-                    <form action="deleteServices.jsp" method="POST" style="display:inline;">
-                        <input type="hidden" name="id" value="<%= id %>">
-                        <button type="submit" class="delete">Delete</button>
-                    </form>
-                </td>
-            </tr>
-            <%
-                }
-            %>
+        <tbody id="servicesTableBody">
+            <!-- Table rows will be populated dynamically -->
         </tbody>
     </table>
-
-    <div class="pagination">
-        <%
-            serviceResultSet = serviceStmt.executeQuery("SELECT COUNT(*) AS total FROM service");
-            serviceResultSet.next();
-            int totalServices = serviceResultSet.getInt("total");
-            int totalServicePages = (int) Math.ceil((double) totalServices / pageSize);
-
-            for (int i = 1; i <= totalServicePages; i++) {
-        %>
-        <a href="?servicePage=<%= i %>&categoryPage=<%= categoryPage %>" class="<%= (i == servicePage) ? "active" : "" %>"><%= i %></a>
-        <%
-            }
-        %>
+    <div class="pagination" id="servicesPagination">
+        <!-- Pagination buttons will be dynamically populated -->
     </div>
-
     <form action="addService.jsp" method="GET">
         <button type="submit" class="create-btn">Create New Service</button>
     </form>
 </div>
 
-<%
-    String categorySql = "SELECT * FROM service_category ORDER BY id ASC LIMIT " + pageSize + " OFFSET " + categoryOffset;
-    categoryStmt = connection.createStatement();
-    categoryResultSet = categoryStmt.executeQuery(categorySql);
-%>
-
-<div class="table-container footer-space">
+<div class="table-container">
     <h1>Categories</h1>
     <table>
         <thead>
@@ -231,68 +151,102 @@
                 <th>Actions</th>
             </tr>
         </thead>
-        <tbody>
-            <%
-                while (categoryResultSet.next()) {
-                    int id = categoryResultSet.getInt("id");
-                    String name = categoryResultSet.getString("name");
-                    String description = categoryResultSet.getString("description");
-            %>
-            <tr>
-                <td><%= id %></td>
-                <td><%= name %></td>
-                <td><%= description %></td>
-                <td class="action-buttons">
-                    <form action="editCategory.jsp" method="GET" style="display:inline;">
-                        <input type="hidden" name="id" value="<%= id %>">
-                        <button type="submit">Edit</button>
-                    </form>
-                    <form action="deleteCategory.jsp" method="POST" style="display:inline;">
-                        <input type="hidden" name="id" value="<%= id %>">
-                        <button type="submit" class="delete">Delete</button>
-                    </form>
-                </td>
-            </tr>
-            <%
-                }
-            %>
+        <tbody id="categoriesTableBody">
+            <!-- Table rows will be populated dynamically -->
         </tbody>
     </table>
-
-    <div class="pagination">
-        <%
-            categoryResultSet = categoryStmt.executeQuery("SELECT COUNT(*) AS total FROM service_category");
-            categoryResultSet.next();
-            int totalCategories = categoryResultSet.getInt("total");
-            int totalCategoryPages = (int) Math.ceil((double) totalCategories / pageSize);
-
-            for (int i = 1; i <= totalCategoryPages; i++) {
-        %>
-        <a href="?servicePage=<%= servicePage %>&categoryPage=<%= i %>" class="<%= (i == categoryPage) ? "active" : "" %>"><%= i %></a>
-        <%
-            }
-        %>
+    <div class="pagination" id="categoriesPagination">
+        <!-- Pagination buttons will be dynamically populated -->
     </div>
-
     <form action="addCategory.jsp" method="GET">
         <button type="submit" class="create-btn">Create New Category</button>
     </form>
 </div>
 
-<%
-    } catch (Exception e) {
-        application.log("Error: " + e.getMessage());
-%>
-<p style="color:red;">An error occurred while fetching the data.</p>
-<%
-    } finally {
-        if (serviceResultSet != null) try { serviceResultSet.close(); } catch (SQLException ignore) {}
-        if (categoryResultSet != null) try { categoryResultSet.close(); } catch (SQLException ignore) {}
-        if (serviceStmt != null) try { serviceStmt.close(); } catch (SQLException ignore) {}
-        if (categoryStmt != null) try { categoryStmt.close(); } catch (SQLException ignore) {}
-        if (connection != null) try { connection.close(); } catch (SQLException ignore) {}
-    }
-%>
+<script>
+const pageSize = 5;
+
+function fetchServices(page = 1) {
+    fetch('http://localhost:8081/api/services?page=' + page + '&size=' + pageSize)
+        .then(response => response.json())
+        .then(data => {
+            const servicesTableBody = document.getElementById('servicesTableBody');
+            const servicesPagination = document.getElementById('servicesPagination');
+            servicesTableBody.innerHTML = '';
+            servicesPagination.innerHTML = '';
+
+            data.content.forEach(service => {
+                servicesTableBody.innerHTML += 
+                    '<tr>' +
+                        '<td>' + service.id + '</td>' +
+                        '<td>' + service.category_name + '</td>' +
+                        '<td>' + service.name + '</td>' +
+                        '<td>' + service.description + '</td>' +
+                        '<td>$' + service.price.toFixed(2) + '</td>' +
+                        '<td class="action-buttons">' +
+                            '<form action="editServices.jsp" method="GET" style="display:inline;">' +
+                                '<input type="hidden" name="id" value="' + service.id + '">' +
+                                '<button type="submit">Edit</button>' +
+                            '</form>' +
+                            '<form action="deleteServices.jsp" method="POST" style="display:inline;">' +
+                                '<input type="hidden" name="id" value="' + service.id + '">' +
+                                '<button type="submit" class="delete">Delete</button>' +
+                            '</form>' +
+                        '</td>' +
+                    '</tr>';
+            });
+
+            for (let i = 1; i <= data.totalPages; i++) {
+                servicesPagination.innerHTML += 
+                    '<a href="#" class="' + (i === page ? 'active' : '') + '" onclick="fetchServices(' + i + ')">' + i + '</a>';
+            }
+        })
+        .catch(error => console.error('Error fetching services:', error));
+}
+
+function fetchCategories(page = 1) {
+    fetch('http://localhost:8081/api/categories?page=' + page + '&size=' + pageSize)
+        .then(response => response.json())
+        .then(data => {
+            const categoriesTableBody = document.getElementById('categoriesTableBody');
+            const categoriesPagination = document.getElementById('categoriesPagination');
+            categoriesTableBody.innerHTML = '';
+            categoriesPagination.innerHTML = '';
+
+            data.content.forEach(category => {
+                categoriesTableBody.innerHTML += 
+                    '<tr>' +
+                        '<td>' + category.id + '</td>' +
+                        '<td>' + category.name + '</td>' +
+                        '<td>' + category.description + '</td>' +
+                        '<td class="action-buttons">' +
+                            '<form action="editCategory.jsp" method="GET" style="display:inline;">' +
+                                '<input type="hidden" name="id" value="' + category.id + '">' +
+                                '<button type="submit">Edit</button>' +
+                            '</form>' +
+                            '<form action="deleteCategory.jsp" method="POST" style="display:inline;">' +
+                                '<input type="hidden" name="id" value="' + category.id + '">' +
+                                '<button type="submit" class="delete">Delete</button>' +
+                            '</form>' +
+                        '</td>' +
+                    '</tr>';
+            });
+
+            for (let i = 1; i <= data.totalPages; i++) {
+                categoriesPagination.innerHTML += 
+                    '<a href="#" class="' + (i === page ? 'active' : '') + '" onclick="fetchCategories(' + i + ')">' + i + '</a>';
+            }
+        })
+        .catch(error => console.error('Error fetching categories:', error));
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    fetchServices();
+    fetchCategories();
+});
+</script>
+
+
 <%@ include file="../footer.html" %>
 </body>
 </html>
