@@ -64,13 +64,13 @@ public class CustomerDAO {
     // Retrieve top 10 customers by booking value
     public List<Map<String, Object>> getTop10CustomersByValue() throws SQLException {
         List<Map<String, Object>> customers = new ArrayList<>();
-        String query = "SELECT u.id, u.name, u.email, u.postal_code, SUM(bd.total) AS totalSpent " +
+        String query = "SELECT u.id, u.name, u.email, u.postal_code, SUM(bd.totalwithgst) AS totalspent" +
                        "FROM users u " +
                        "JOIN booking_list bl ON u.id = bl.user_id " +
                        "JOIN booking_details bd ON bl.id = bd.booking_id " +
                        "WHERE u.role = 'user' " +
                        "GROUP BY u.id, u.name, u.email, u.postal_code " +
-                       "ORDER BY totalSpent DESC LIMIT 10";
+                       "ORDER BY totalspent DESC LIMIT 10";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query);
@@ -82,7 +82,7 @@ public class CustomerDAO {
                 customer.put("name", rs.getString("name"));
                 customer.put("email", rs.getString("email"));
                 customer.put("postal_code", rs.getString("postal_code"));
-                customer.put("totalSpent", rs.getDouble("totalSpent"));
+                customer.put("totalSpent", rs.getDouble("totalspent"));
                 customers.add(customer);
             }
         }
