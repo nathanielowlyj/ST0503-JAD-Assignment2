@@ -49,142 +49,174 @@
             if (conn != null) try { conn.close(); } catch (SQLException ignore) {}
         }
         return;
-    } else if ("addBooking".equals(request.getParameter("action"))) {
-        String userId = (String) session.getAttribute("id");
-        String serviceId = request.getParameter("serviceId");
-        String bookingDate = request.getParameter("date") + " " + request.getParameter("time") + ":00";
-        String duration = request.getParameter("duration");
-        Connection conn = null;
-        PreparedStatement stmt = null;
-
-        try {
-            Class.forName("org.postgresql.Driver");
-            conn = DriverManager.getConnection(
-                "jdbc:postgresql://ep-wild-feather-a1euu27g.ap-southeast-1.aws.neon.tech/cleaningServices?sslmode=require",
-                "cleaningServices_owner",
-                "mh0zgxauP6HJ");
-
-            String insertBookingListSQL = "INSERT INTO booking_list (user_id) VALUES (?) RETURNING id";
-            stmt = conn.prepareStatement(insertBookingListSQL);
-            stmt.setInt(1, Integer.parseInt(userId));
-            ResultSet rs = stmt.executeQuery();
-            rs.next();
-            int bookingId = rs.getInt(1);
-
-            String insertBookingDetailsSQL = "INSERT INTO booking_details (booking_id, service_id, booking_date, quantity, price) " +
-                                             "VALUES (?, ?, ?, ?, (SELECT price FROM service WHERE id = ?))";
-            stmt = conn.prepareStatement(insertBookingDetailsSQL);
-            stmt.setInt(1, bookingId);
-            stmt.setInt(2, Integer.parseInt(serviceId));
-            stmt.setTimestamp(3, Timestamp.valueOf(bookingDate));
-            stmt.setInt(4, Integer.parseInt(duration));
-            stmt.setInt(5, Integer.parseInt(serviceId));
-            stmt.executeUpdate();
-
-            response.getWriter().write("success");
-        } catch (Exception e) {
-            application.log("Error booking service: " + e.getMessage());
-            response.getWriter().write("error");
-        } finally {
-            if (stmt != null) try { stmt.close(); } catch (SQLException ignore) {}
-            if (conn != null) try { conn.close(); } catch (SQLException ignore) {}
-        }
-        return;
     }
 %>
 
 <!DOCTYPE html>
 <html>
 <head>
+<script src="https://js.stripe.com/v3/"></script>
 <meta charset="UTF-8">
 <title>Booking</title>
 <style>
-    body {
-        margin: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-    }
-    .container {
-        margin-top: 168px;
-        width: 60%;
-        height: auto;
-        display: flex;
-        background-color: #00000022;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        padding: 10px;
-    }
-    .details {
-        width: 70%;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        padding: 20px;
-        padding-top: 30px;
-        color: white;
-    }
-    .row {
-        margin-top: 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-        width: 100%;
-    }
-    .row label {
-        font-size: 16px;
-        font-weight: bold;
-        margin-right: 10px;
-        text-align: left;
-        flex: 1; 
-    }
-    .row input,
-    .row select {
-        flex: 2; 
-        padding: 5px;
-        font-size: 14px;
-        margin-left: 10px; 
-    }
-    .checkout {
-        margin: 20px;
-        margin-top: 30px;
-        width: 30%;
-        background-color: #00000010;
-        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 10px;
-    }
-    .checkout .box p {
-        top: 30%;
-    }
-    .box {
-        width: 100%;
-        height: 500px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        radius: 10px;
-        margin-bottom: 10px;
-        padding: 10px;
-        color: white;
-        text-align: center;
-    }
-    .button {
-        width: 100%;
-        height: 25px;
-        background-color: #4285F4;
-        color: white;
-        border: none;
-        cursor: pointer;
-        text-align: center;
-        line-height: 25px;
-        border-radius: 4px;
-        font-size: 14px;
-    }
-    footer {
-        width: 100%;
-    }
+   	body {
+	    margin: 0;
+	    font-family: Arial, sans-serif;
+	    background-color: #f4f4f4;
+	}
+	
+	.header-gap {
+	    height: 60px; 
+	}
+	
+	.container {
+	    margin: 0 auto;
+	    margin-top: 30px; /* Adjust margin to create space below header gap */
+	    width: 60%;
+	    display: flex;
+	    background-color: #00000022;
+	    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	    padding: 20px;
+	}
+	
+	.details {
+	    width: 70%;
+	    display: flex;
+	    flex-direction: column;
+	    padding: 20px;
+	    color: white;
+	}
+	
+	.row {
+	    margin-top: 15px;
+	    display: flex;
+	    justify-content: space-between;
+	    margin-bottom: 15px;
+	    width: 100%;
+	}
+	
+	.row label {
+	    font-size: 16px;
+	    font-weight: bold;
+	    margin-right: 10px;
+	    text-align: left;
+	    flex: 1;
+	}
+	
+	.row input,
+	.row select {
+	    flex: 2;
+	    padding: 5px;
+	    font-size: 14px;
+	    margin-left: 10px;
+	}
+	
+	.checkout {
+	    width: 30%;
+	    background-color: #00000010;
+	    display: flex;
+	    flex-direction: column;
+	    align-items: center;
+	    padding: 10px;
+	}
+	
+	.checkout .box p {
+	    top: 30%;
+	}
+	
+	.box {
+	    width: 100%;
+	    height: 250px;
+	    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	    border-radius: 10px;
+	    padding: 10px;
+	    color: white;
+	    text-align: center;
+	}
+	
+	.button {
+	    width: 100%;
+	    height: 40px;
+	    background-color: #4285F4;
+	    color: white;
+	    border: none;
+	    cursor: pointer;
+	    border-radius: 4px;
+	    font-size: 14px;
+	}
+	
+	/* Background Dimming Effect */
+	.modal-overlay {
+	    display: none;
+	    position: fixed;
+	    top: 0;
+	    left: 0;
+	    width: 100%;
+	    height: 100%;
+	    background: rgba(0, 0, 0, 0.5);
+	    z-index: 999;
+	}
+	
+	/* Modal Box */
+	.modal {
+	    display: none;
+	    position: fixed;
+	    top: 50%;
+	    left: 50%;
+	    transform: translate(-50%, -50%);
+	    width: 320px;
+	    background: white;
+	    padding: 20px;
+	    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+	    border-radius: 8px;
+	    text-align: center;
+	    z-index: 1000;
+	}
+	
+	/* Modal Close Button */
+	.modal .close-btn {
+	    position: absolute;
+	    top: 10px;
+	    right: 10px;
+	    background: none;
+	    border: none;
+	    font-size: 18px;
+	    font-weight: bold;
+	    cursor: pointer;
+	    color: #333;
+	}
+	
+	/* Modal Input Fields */
+	.modal input {
+	    width: 90%;
+	    padding: 10px;
+	    margin: 5px 0;
+	    border: 1px solid #ddd;
+	    border-radius: 4px;
+	}
+	
+	/* Modal Button */
+	.modal button {
+	    width: 100%;
+	    padding: 10px;
+	    background-color: #28a745;
+	    color: white;
+	    border: none;
+	    cursor: pointer;
+	    margin-top: 10px;
+	}
+	
+	/* Footer */
+	footer {
+	    position: fixed;
+	    bottom: 0;
+	    left: 0;
+	    width: 100%;
+	    background: #333;
+	    color: white;
+	    text-align: center;
+	    padding: 10px 0;
+	}
 </style>
 <script>
     async function updateServices(categoryId) {
@@ -216,157 +248,230 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        const dateInput = document.getElementById('date');
+    function updateCost() {
         const servicesDropdown = document.getElementById('services');
         const durationInput = document.getElementById('duration');
-        const timeInput = document.getElementById('time');
         const costSpan = document.getElementById('cost');
         const totalSpan = document.getElementById('total');
         const GSTSpan = document.getElementById('GSTcontent');
         const totalGSTSpan = document.getElementById('totalGST');
-        const checkoutButton = document.querySelector('.button');
 
-        const today = new Date();
-        today.setDate(today.getDate() + 3);
-        const minDate = today.toISOString().split('T')[0];
-        dateInput.min = minDate;
+        const selectedOption = servicesDropdown.options[servicesDropdown.selectedIndex];
+        const costPerHour = parseFloat(selectedOption.getAttribute('data-price')) || 0;
+        const duration = parseInt(durationInput.value) || 0;
 
-        function updateCost() {
-            const selectedOption = servicesDropdown.options[servicesDropdown.selectedIndex];
-            const costPerHour = parseFloat(selectedOption.getAttribute('data-price')) || 0;
-            const duration = parseInt(durationInput.value) || 0;
+        const totalCost = costPerHour * duration;
+        const gst = totalCost * 0.09;
+        const totalWithGST = totalCost + gst;
 
-            costSpan.textContent = costPerHour.toFixed(2);
-            totalSpan.textContent = (costPerHour * duration).toFixed(2);
-            GSTSpan.textContent = (costPerHour * duration * 0.09).toFixed(2);
-            totalGSTSpan.textContent = (costPerHour * duration + costPerHour * duration * 0.09).toFixed(2);
+        costSpan.textContent = costPerHour.toFixed(2);
+        totalSpan.textContent = totalCost.toFixed(2);
+        GSTSpan.textContent = gst.toFixed(2);
+        totalGSTSpan.textContent = totalWithGST.toFixed(2);
+    }
+
+    function validateCheckout() {
+        const servicesDropdown = document.getElementById('services');
+        const dateInput = document.getElementById('date');
+        const timeInput = document.getElementById('time');
+        const durationInput = document.getElementById('duration');
+
+        if (!servicesDropdown.value) {
+            alert('Please select a service.');
+            return false;
+        }
+        if (!dateInput.value) {
+            alert('Please select a date.');
+            return false;
+        }
+        if (!timeInput.value) {
+            alert('Please select a time.');
+            return false;
+        }
+        if (!durationInput.value || parseInt(durationInput.value) <= 0) {
+            alert('Please enter a valid duration.');
+            return false;
+        }
+        return true;
+    }
+
+
+    async function confirmPayment() {
+        const serviceId = document.getElementById('services').value;
+        const serviceName = document.getElementById('services').options[document.getElementById('services').selectedIndex].text;
+        const date = document.getElementById('date').value;
+        const time = document.getElementById('time').value;
+        const duration = parseInt(document.getElementById('duration').value);
+
+        if (!serviceId || !date || !time || !duration) {
+            alert('Please fill in all fields.');
+            return;
         }
 
-        async function handleCheckout() {
-            if (!validateForm()) return;
-            const serviceId = servicesDropdown.value;
-            const date = dateInput.value;
-            const time = timeInput.value;
-            const duration = durationInput.value;
+        // Fetch the cost per hour from the selected service
+        const selectedServiceOption = document.getElementById('services').options[document.getElementById('services').selectedIndex];
+        const costPerHour = parseFloat(selectedServiceOption.getAttribute('data-price')) || 0;
 
-            const url = 'serviceBooking.jsp?action=addBooking';
-            const params = new URLSearchParams({
+        // Calculate total cost
+        const totalCost = costPerHour * duration;
+        const gst = totalCost * 0.09;
+        const totalWithGST = totalCost + gst;
+
+        // Construct the payment request payload
+        const paymentRequest = {
+            productName: serviceName,
+            amount: Math.round(totalWithGST * 100), 
+            quantity: 1
+        };
+
+        try {
+            // Step 1: Create Stripe checkout session
+            const stripeResponse = await fetch('http://localhost:8081/api/payment/checkout-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(paymentRequest)
+            });
+
+            if (!stripeResponse.ok) {
+                throw new Error('Failed to create Stripe checkout session');
+            }
+
+            const stripeData = await stripeResponse.json();
+            const sessionId = stripeData.sessionId;
+
+            // Redirect user to Stripe checkout
+            const stripe = Stripe('pk_test_51QqjHaRlZMaA2Tk8oxnxP6g6QvFohAkkLzBim5lrIN66f4ZZYXsS1xWuodCCCAbqMpxdJ9osaO9ml1yKjyvp5fYt00NfnmOKoT'); // Replace with your publishable key
+            const { error } = await stripe.redirectToCheckout({ sessionId });
+
+            if (error) {
+                console.error('Stripe checkout error:', error);
+                alert('Payment process failed. Please try again.');
+                return;
+            }
+
+            // Step 2: Add the booking to the database
+            const bookingDetails = {
                 serviceId,
                 date,
                 time,
-                duration,
+                duration
+            };
+
+            const bookingResponse = await fetch('http://localhost:8081/api/bookings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(bookingDetails)
             });
 
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    body: params,
-                });
+            if (!bookingResponse.ok) {
+                throw new Error('Failed to add booking to database');
+            }
 
-                alert('Service booked successfully!');
-                window.location.href = '../landing.jsp';
-               
-            } catch (error) {
-                console.error('Error during checkout:', error);
-                alert('An error occurred. Please try again.');
-            }
-        }
+            alert('Payment successful! Booking confirmed.');
+            closePaymentPopup();
+            window.location.href = '../landing.jsp';
 
-        function validateForm() {
-            if (!servicesDropdown.value) {
-                alert('Please select a service.');
-                return false;
-            }
-            if (!dateInput.value) {
-                alert('Please select a date.');
-                return false;
-            }
-            if (!timeInput.value) {
-                alert('Please select a time.');
-                return false;
-            }
-            if (!durationInput.value || parseInt(durationInput.value) <= 0) {
-                alert('Please enter a valid duration.');
-                return false;
-            }
-            return true;
+        } catch (error) {
+            console.error('Error processing payment:', error);
+            alert('An error occurred. Please try again.');
         }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const servicesDropdown = document.getElementById('services');
+        const durationInput = document.getElementById('duration');
 
         servicesDropdown.addEventListener('change', updateCost);
         durationInput.addEventListener('input', updateCost);
-        checkoutButton.addEventListener('click', handleCheckout);
+
+        document.getElementById('paymentModal').style.display = 'none';
+        document.getElementById('modalOverlay').style.display = 'none';
+
+        // ✅ Check if `success=true` is in the URL after Stripe redirects the user
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('success') === 'true') {
+            alert('✅ Payment successful! Booking confirmed.');
+        } else if (urlParams.get('success') === 'false') {
+            alert('❌ Payment was cancelled or failed.');
+        }
     });
+
 </script>
 </head>
 <body>
 <%@ include file="../header/header.jsp" %>
-    <div class="container">
-        <div class="details">
-            <% 
-                Connection connection = null;
-                PreparedStatement categoryStmt = null;
-                ResultSet categoryResult = null;
+<div class="header-gap"></div>
+<div class="container">
+    <div class="details">
+        <div class="row">
+		    <label for="categories">Categories:</label>
+		    <select id="categories" name="categories" onchange="updateServices(this.value)">
+		        <option value="">Select category</option>
+		        <% 
+		            Connection conn = null;
+		            PreparedStatement stmt = null;
+		            ResultSet result = null;
+		            try {
+		                Class.forName("org.postgresql.Driver");
+		                conn = DriverManager.getConnection(
+		                    "jdbc:postgresql://ep-wild-feather-a1euu27g.ap-southeast-1.aws.neon.tech/cleaningServices?sslmode=require",
+		                    "cleaningServices_owner",
+		                    "mh0zgxauP6HJ");
+		
+		                String sql = "SELECT id, name FROM service_category"; // Fetch all categories
+		                stmt = conn.prepareStatement(sql);
+		                result = stmt.executeQuery();
+		
+		                while (result.next()) {
+		        %>
+		        <option value="<%= result.getInt("id") %>"><%= result.getString("name") %></option>
+		        <% 
+		                }
+		            } catch (Exception e) {
+		                application.log("Error fetching categories: " + e.getMessage());
+		            } finally {
+		                if (result != null) try { result.close(); } catch (SQLException ignore) {}
+		                if (stmt != null) try { stmt.close(); } catch (SQLException ignore) {}
+		                if (conn != null) try { conn.close(); } catch (SQLException ignore) {}
+		            }
+		        %>
+		    </select>
+		</div>
 
-                try {
-                    Class.forName("org.postgresql.Driver");
-                    connection = DriverManager.getConnection(
-                        "jdbc:postgresql://ep-wild-feather-a1euu27g.ap-southeast-1.aws.neon.tech/cleaningServices?sslmode=require",
-                        "cleaningServices_owner",
-                        "mh0zgxauP6HJ");
-
-                    String categoryQuery = "SELECT id, name FROM service_category";
-                    categoryStmt = connection.prepareStatement(categoryQuery);
-                    categoryResult = categoryStmt.executeQuery();
-            %>
-            <div class="row">
-                <label for="categories">Categories:</label>
-                <select id="categories" name="categories" onchange="updateServices(this.value)">
-                    <option value="">Select category</option>
-                    <% while (categoryResult.next()) { %>
-                        <option value="<%= categoryResult.getInt("id") %>">
-                            <%= categoryResult.getString("name") %>
-                        </option>
-                    <% } %>
-                </select>
-            </div>
-            <div class="row">
-                <label for="services">Service:</label>
-                <select id="services" name="services">
-                    <option value="">Select service</option>
-                </select>
-            </div>
-            <div class="row">
-                <label for="date">Date:</label>
-                <input type="date" id="date" name="date" />
-            </div>
-            <div class="row">
-                <label for="time">Time:</label>
-                <input type="time" id="time" name="time"/>
-            </div>
-            <div class="row">
-                <label for="duration">Duration (Hours):</label>
-                <input type="number" id="duration" name="duration" min="1" placeholder="Hours" />
-            </div>
-            <% 
-                } finally {
-                    if (categoryResult != null) try { categoryResult.close(); } catch (SQLException ignore) {}
-                    if (categoryStmt != null) try { categoryStmt.close(); } catch (SQLException ignore) {}
-                    if (connection != null) try { connection.close(); } catch (SQLException ignore) {}
-                }
-            %>
+        <div class="row">
+            <label for="services">Service:</label>
+            <select id="services" name="services">
+                <option value="">Select service</option>
+            </select>
         </div>
-        <div class="checkout">
-            <div class="box">
-                <p id="costPerHour">Cost: $<span id="cost">0</span>/hr</p>
-                <p id="totalCost">Total: $<span id="total">0</span></p>
-                <p id="GST">GST: $<span id="GSTcontent">0</span></p>
-                <p id="totalCostGST">Total (With GST): $<span id="totalGST">0</span></p>
-            </div>
-            <button class="button">Checkout</button>
+        <div class="row">
+            <label for="date">Date:</label>
+            <input type="date" id="date" name="date" />
+        </div>
+        <div class="row">
+            <label for="time">Time:</label>
+            <input type="time" id="time" name="time"/>
+        </div>
+        <div class="row">
+            <label for="duration">Duration (Hours):</label>
+            <input type="number" id="duration" name="duration" min="1" placeholder="Hours" />
         </div>
     </div>
+    <div class="checkout">
+        <div class="box">
+            <p id="costPerHour">Cost: $<span id="cost">0</span>/hr</p>
+            <p id="totalCost">Total: $<span id="total">0</span></p>
+            <p id="GST">GST: $<span id="GSTcontent">0</span></p>
+            <p id="totalCostGST">Total (With GST): $<span id="totalGST">0</span></p>
+        </div>
+        <button class="button" onclick="confirmPayment()">Checkout</button>
+    </div>
+</div>
+
 <%@ include file="../footer.html" %>
 </body>
 </html>
-	
