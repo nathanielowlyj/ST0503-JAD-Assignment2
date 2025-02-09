@@ -88,29 +88,32 @@
             color: white;
         }
     </style>
-    <script>
-        function updateFilterOptions() {
-            var filterType = document.getElementById("filterType").value;
-
-            // Hide all inputs initially
-            document.getElementById("dateInputs").style.display = "none";
-            document.getElementById("monthInput").style.display = "none";
-            document.getElementById("singleDateInput").style.display = "none";
-
-            // Show relevant inputs based on selection
-            if (filterType === "dateRange") {
-                document.getElementById("dateInputs").style.display = "flex";
-            } else if (filterType === "specificDate") {
-                document.getElementById("singleDateInput").style.display = "block";
-            } else if (filterType === "month") {
-                document.getElementById("monthInput").style.display = "block";
-            }
-        }
-
-        window.onload = function () {
-            updateFilterOptions(); // Ensure the correct options are displayed after a filter is applied
-        };
-    </script>
+	<script>
+	    function updateFilterOptions() {
+	        var filterType = document.getElementById("filterType").value;
+	
+	        // Hide all filters initially
+	        document.getElementById("dateInputs").style.display = "none";
+	        document.getElementById("monthInput").style.display = "none";
+	        document.getElementById("singleDateInput").style.display = "none";
+	        document.getElementById("statusInput").style.display = "none"; // Hide status dropdown
+	
+	        // Show the correct input based on the selected filter
+	        if (filterType === "dateRange") {
+	            document.getElementById("dateInputs").style.display = "flex";
+	        } else if (filterType === "specificDate") {
+	            document.getElementById("singleDateInput").style.display = "block";
+	        } else if (filterType === "month") {
+	            document.getElementById("monthInput").style.display = "block";
+	        } else if (filterType === "status") {
+	            document.getElementById("statusInput").style.display = "block"; // Show status dropdown
+	        }
+	    }
+	
+	    window.onload = function () {
+	        updateFilterOptions(); // Ensure the correct options are displayed when the page loads
+	    };
+	</script>
 </head>
 <body>
 
@@ -121,44 +124,57 @@
 
     <!-- Filter Section -->
     <div class="filter-section">
-        <form action="/JAD-Assignment2/admin/FilterBookingsServlet" method="GET" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
-            <label for="filterType">Filter By:</label>
-            <select id="filterType" name="filterType" onchange="updateFilterOptions()">
-                <option value="none" <%= "none".equals(request.getParameter("filterType")) ? "selected" : "" %>>All Records</option>
-                <option value="specificDate" <%= "specificDate".equals(request.getParameter("filterType")) ? "selected" : "" %>>Specific Date</option>
-                <option value="dateRange" <%= "dateRange".equals(request.getParameter("filterType")) ? "selected" : "" %>>Date Range</option>
-                <option value="month" <%= "month".equals(request.getParameter("filterType")) ? "selected" : "" %>>Month</option>
+    <form action="/JAD-Assignment2/admin/FilterBookingsServlet" method="GET" 
+          style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+        <label for="filterType">Filter By:</label>
+        <select id="filterType" name="filterType" onchange="updateFilterOptions()">
+            <option value="none" <%= "none".equals(request.getParameter("filterType")) ? "selected" : "" %>>All Records</option>
+            <option value="specificDate" <%= "specificDate".equals(request.getParameter("filterType")) ? "selected" : "" %>>Specific Date</option>
+            <option value="dateRange" <%= "dateRange".equals(request.getParameter("filterType")) ? "selected" : "" %>>Date Range</option>
+            <option value="month" <%= "month".equals(request.getParameter("filterType")) ? "selected" : "" %>>Month</option>
+            <option value="status" <%= "status".equals(request.getParameter("filterType")) ? "selected" : "" %>>Status</option>
+        </select>
+
+        <!-- Single Date Filter -->
+        <div id="singleDateInput" style="display: none;">
+            <label for="date">Select Date:</label>
+            <input type="date" id="date" name="date" value="<%= request.getParameter("date") %>">
+        </div>
+
+        <!-- Date Range Filter -->
+        <div id="dateInputs" style="display: none; flex-direction: column;">
+            <label for="startDate">Start Date:</label>
+            <input type="date" id="startDate" name="startDate" value="<%= request.getParameter("startDate") %>">
+            <label for="endDate">End Date:</label>
+            <input type="date" id="endDate" name="endDate" value="<%= request.getParameter("endDate") %>">
+        </div>
+
+        <!-- Month Filter -->
+        <div id="monthInput" style="display: none;">
+            <label for="month">Select Month:</label>
+            <select id="month" name="month">
+                <% for (int i = 1; i <= 12; i++) { %>
+                    <option value="<%= i %>" <%= (String.valueOf(i).equals(request.getParameter("month"))) ? "selected" : "" %>>
+                        <%= new java.text.DateFormatSymbols().getMonths()[i - 1] %>
+                    </option>
+                <% } %>
             </select>
+        </div>
 
-            <!-- Single Date Filter -->
-            <div id="singleDateInput" style="display: none;">
-                <label for="date">Select Date:</label>
-                <input type="date" id="date" name="date" value="<%= request.getParameter("date") %>">
-            </div>
+        <!-- Status Filter (Hidden by Default) -->
+        <div id="statusInput" style="display: none;">
+            <label for="status">Select Status:</label>
+            <select id="status" name="status">
+                <option value="pending" <%= "pending".equals(request.getParameter("status")) ? "selected" : "" %>>Pending</option>
+                <option value="complete" <%= "complete".equals(request.getParameter("status")) ? "selected" : "" %>>Complete</option>
+                <option value="cancelled" <%= "cancelled".equals(request.getParameter("status")) ? "selected" : "" %>>Cancelled</option>
+            </select>
+        </div>
 
-            <!-- Date Range Filter -->
-            <div id="dateInputs" style="display: none; flex-direction: column;">
-                <label for="startDate">Start Date:</label>
-                <input type="date" id="startDate" name="startDate" value="<%= request.getParameter("startDate") %>">
-                <label for="endDate">End Date:</label>
-                <input type="date" id="endDate" name="endDate" value="<%= request.getParameter("endDate") %>">
-            </div>
+        <button type="submit">Filter</button>
+    </form>
+</div>
 
-            <!-- Month Filter -->
-            <div id="monthInput" style="display: none;">
-                <label for="month">Select Month:</label>
-                <select id="month" name="month">
-                    <% for (int i = 1; i <= 12; i++) { %>
-                        <option value="<%= i %>" <%= (String.valueOf(i).equals(request.getParameter("month"))) ? "selected" : "" %>>
-                            <%= new java.text.DateFormatSymbols().getMonths()[i - 1] %>
-                        </option>
-                    <% } %>
-                </select>
-            </div>
-
-            <button type="submit">Filter</button>
-        </form>
-    </div>
 
     <!-- Display Booking List -->
     <table>
@@ -169,7 +185,8 @@
                 <th>Booking Date</th>
                 <th>Quantity</th>
                 <th>Price</th>
-                <th>Total</th>
+                <th>Total (w/ GST)</th>
+                <th>Status</th>
             </tr>
         </thead>
         <tbody>
@@ -190,15 +207,16 @@
                 <td><%= booking.get("serviceName") %></td>
                 <td><%= booking.get("bookingDate") %></td>
                 <td><%= booking.get("quantity") %></td>
-                <td>$<%= booking.get("price") %></td>
-                <td>$<%= booking.get("total") %></td>
+                <td>$<%= String.format("%.2f", Double.parseDouble(booking.get("price").toString())) %></td>
+                <td>$<%= String.format("%.2f", Double.parseDouble(booking.get("total").toString()) * 1.09) %></td>
+                <td><%= booking.get("status") %></td>
             </tr>
             <%
                     }
                 } else {
             %>
             <tr>
-                <td colspan="6">No bookings found.</td>
+                <td colspan="7">No bookings found.</td>
             </tr>
             <%
                 }

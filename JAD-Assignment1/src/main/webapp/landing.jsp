@@ -89,28 +89,30 @@
         }
 
         .reviews {
-            display: flex;
-            justify-content: space-between;
             padding: 50px 30px;
             background-color: #fff;
         }
 
-        .review, .fake-person {
-            flex: 1;
-            margin: 0 15px;
+        .reviews h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .review-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 15px;
+            padding: 10px;
+        }
+
+        .review-box {
+            flex: 0 0 auto;
+            width: 300px;
             padding: 20px;
             background-color: #f1f1f1;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .review h2, .fake-person h2 {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-
-        .review p, .fake-person p {
-            font-size: 16px;
         }
     </style>
 </head>
@@ -126,10 +128,9 @@
     </section>
 
     <section class="reviews">
-    <div class="review">
         <h2>Customer Reviews</h2>
+        <div class="review-container">
         <%
-            String user_id = "2"; 
             String dbURL = "jdbc:postgresql://ep-wild-feather-a1euu27g.ap-southeast-1.aws.neon.tech/cleaningServices?sslmode=require";
             String dbUser = "cleaningServices_owner";
             String dbPassword = "mh0zgxauP6HJ";
@@ -142,10 +143,9 @@
                 Class.forName("org.postgresql.Driver");
                 connection = DriverManager.getConnection(dbURL, dbUser, dbPassword);
 
-                // Query to fetch feedback from user ID 2
-                String sql = "SELECT description, rating FROM feedback WHERE user_id = ?";
+                // Query to fetch feedback from all users where rating is 4 or 5
+                String sql = "SELECT description, rating FROM feedback WHERE rating IN (4, 5)";
                 stmt = connection.prepareStatement(sql);
-                stmt.setInt(1, Integer.parseInt(user_id));
                 resultSet = stmt.executeQuery();
 
                 if (resultSet.next()) {
@@ -153,14 +153,15 @@
                         String feedback = resultSet.getString("description");
                         int rating = resultSet.getInt("rating");
         %>
-                        <p>"<%= feedback %>"</p>
-                        <p>Rating: <%= rating %>/5</p>
-                        <hr>
+                        <div class="review-box">
+                            <p>"<%= feedback %>"</p>
+                            <p>Rating: <%= rating %>/5</p>
+                        </div>
         <%
                     } while (resultSet.next());
                 } else {
         %>
-                    <p>No reviews from this user yet.</p>
+                    <p>No reviews available yet.</p>
         <%
                 }
             } catch (Exception e) {
@@ -171,13 +172,8 @@
                 if (connection != null) try { connection.close(); } catch (SQLException ignore) {}
             }
         %>
-    </div>
-    <div class="fake-person">
-        <h2>Meet Jane Doe</h2>
-        <p>Jane has been a trusted cleaner for 5 years, bringing smiles and cleanliness to every home.</p>
-    </div>
-</section>
-
+        </div>
+    </section>
 
 <%@ include file="footer.html" %>
 </body>

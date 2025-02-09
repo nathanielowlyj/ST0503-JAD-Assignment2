@@ -7,7 +7,7 @@ public class BookingDAO {
 
     public List<Map<String, Object>> getAllBookings() throws SQLException {
         String query = "SELECT bd.id AS booking_detail_id, bd.booking_id, bd.service_id, bd.booking_date, " +
-                       "bd.quantity, bd.price, bd.total, s.name AS service_name, s.description AS service_description " +
+                       "bd.quantity, bd.price, bd.total, bd.status, s.name AS service_name, s.description AS service_description " +
                        "FROM booking_details bd JOIN service s ON bd.service_id = s.id";
         List<Map<String, Object>> bookingDetailsList = new ArrayList<>();
 
@@ -23,6 +23,7 @@ public class BookingDAO {
                 booking.put("quantity", resultSet.getInt("quantity"));
                 booking.put("price", resultSet.getDouble("price"));
                 booking.put("total", resultSet.getDouble("total"));
+                booking.put("status", resultSet.getString("status"));
                 bookingDetailsList.add(booking);
             }
         }
@@ -31,7 +32,7 @@ public class BookingDAO {
 
     public List<Map<String, Object>> getFilteredBookings(String filterType, String... params) throws SQLException {
         String query = "SELECT bd.id AS booking_detail_id, bd.booking_id, bd.service_id, bd.booking_date, " +
-                       "bd.quantity, bd.price, bd.total, s.name AS service_name, s.description AS service_description " +
+                       "bd.quantity, bd.price, bd.total, bd.status, s.name AS service_name, s.description AS service_description " +
                        "FROM booking_details bd JOIN service s ON bd.service_id = s.id ";
         List<Map<String, Object>> bookingDetailsList = new ArrayList<>();
 
@@ -47,6 +48,10 @@ public class BookingDAO {
                 break;
             case "month":
                 query += "WHERE EXTRACT(MONTH FROM bd.booking_date) = ?";
+                hasFilter = true;
+                break;
+            case "status":
+                query += "WHERE bd.status = ?";
                 hasFilter = true;
                 break;
             default:
@@ -76,6 +81,7 @@ public class BookingDAO {
                     booking.put("quantity", resultSet.getInt("quantity"));
                     booking.put("price", resultSet.getDouble("price"));
                     booking.put("total", resultSet.getDouble("total"));
+                    booking.put("status", resultSet.getString("status"));
                     bookingDetailsList.add(booking);
                 }
             }
