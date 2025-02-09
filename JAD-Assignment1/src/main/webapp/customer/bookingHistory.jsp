@@ -257,7 +257,7 @@
     }
 </style>
 
-<div id="overlay" onclick="closeEditPopup()"></div>
+<div id="overlay" onclick="closePopup()"></div>
 <div id="editPopup" style="display: none;">
     <h3>Edit Booking</h3>
     <form id="editBookingForm">
@@ -266,7 +266,7 @@
         <input type="date" id="editDate" name="date" required><br>
         <label for="editTime">Time:</label>
         <input type="time" id="editTime" name="time" required><br>
-        <button type="button" onclick="closeEditPopup()">Cancel</button>
+        <button type="button" onclick="closePopup()">Cancel</button>
         <button type="submit">Save Changes</button>
     </form>
 </div>
