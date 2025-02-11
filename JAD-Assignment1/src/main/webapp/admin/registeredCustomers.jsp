@@ -397,7 +397,7 @@
                             .then(data => {
                                 if (data.success) {
                                     alert(`User ID ${currentId} has been banned successfully.`);
-                                    fetchManageCustomers(); // Refresh table after banning
+                                    fetchManageCustomers(); 
                                 } else {
                                     alert(`Error banning user: ${data.error}`);
                                 }

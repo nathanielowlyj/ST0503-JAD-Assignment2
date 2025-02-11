@@ -64,7 +64,7 @@ public class CustomerDAO {
     // Retrieve top 10 customers by booking value
     public List<Map<String, Object>> getTop10CustomersByValue() throws SQLException {
         List<Map<String, Object>> customers = new ArrayList<>();
-        String query = "SELECT u.id, u.name, u.email, u.postal_code, SUM(bd.totalwithgst) AS totalspent" +
+        String query = "SELECT u.id, u.name, u.email, u.postal_code, SUM(bd.totalwithgst) AS totalspent " +
                        "FROM users u " +
                        "JOIN booking_list bl ON u.id = bl.user_id " +
                        "JOIN booking_details bd ON bl.id = bd.booking_id " +
